@@ -1,0 +1,64 @@
+
+services:
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+    ports:
+      - "4566:4566"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  test-consumer:
+    image: test-consumer
+    container_name: test-consumer
+    depends_on:
+      - redis
+      - localstack
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      S3_BUCKET: test-bucket
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      S3_ENDPOINT_URL: http://localstack:4566
+    # Run once then exit
+    restart: "no"
+  test-harness:
+    image: test-harness
+    container_name: test-harness
+    depends_on:
+      - redis
+      - localstack
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      S3_BUCKET: test-bucket
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      S3_ENDPOINT_URL: http://localstack:4566
+    restart: "no"
+volumes:
+  redis_data:

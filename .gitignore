@@ -1,0 +1,18 @@
+# Node / Python / OS files
+*.pyc
+__pycache__/
+*.log
+
+# Docker / Podman
+*.tar
+*.tmp
+docker-compose.override.yml
+redis_data/
+localstack_data/
+test-consumer_data/
+test-harness_data/
+
+# VSCode / IDEs
+.vscode/
+.idea/
+.DS_Store

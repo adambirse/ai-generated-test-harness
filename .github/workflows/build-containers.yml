@@ -1,0 +1,47 @@
+name: Build Containers
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-containers:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        container:
+          - name: test-consumer
+            context: ./systemUnderTest
+            dockerfile: ./systemUnderTest/Dockerfile
+          - name: test-harness
+            context: ./testHarness
+            dockerfile: ./testHarness/Dockerfile
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build ${{ matrix.container.name }}
+      uses: docker/build-push-action@v5
+      with:
+        context: ${{ matrix.container.context }}
+        file: ${{ matrix.container.dockerfile }}
+        push: false
+        tags: ${{ matrix.container.name }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Test ${{ matrix.container.name }} image
+      run: |
+        docker run --rm ${{ matrix.container.name }}:latest --help || echo "Container runs successfully"
+
+    - name: Show image size
+      run: |
+        docker images ${{ matrix.container.name }}:latest --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"

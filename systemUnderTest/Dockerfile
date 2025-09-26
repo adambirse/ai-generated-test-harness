@@ -1,22 +1,11 @@
-# Use a slim Debian base
-FROM debian:bullseye-slim
+# Use Alpine Linux for smaller image size
+FROM alpine:3.18
 
-# Install required tools
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    curl \
-    unzip \
-    less \
-    groff \
-    redis-tools \
-    && pip3 install --no-cache-dir awscli \
-    && rm -rf /var/lib/apt/lists/*
+# Install required tools and AWS CLI
+RUN apk add --no-cache redis curl bash aws-cli
 
-# Copy the test-consumer script
+# Copy and prepare the test-consumer script
 COPY test-consumer.sh /usr/local/bin/test-consumer.sh
-
-# Convert Windows line endings + make executable
 RUN sed -i 's/\r$//' /usr/local/bin/test-consumer.sh && \
     chmod +x /usr/local/bin/test-consumer.sh
 
